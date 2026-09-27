@@ -1,0 +1,51 @@
+name: Bug report
+description: Something in sitewatch doesn't work the way it should.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill in as much detail as you can.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant config
+      description: The sitewatch.yaml section involved (redact webhook URLs/credentials).
+      render: yaml
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Command and output
+      description: The exact command you ran and its full output.
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: sitewatch version
+      description: Output of `sitewatch version`.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other (specify above)
+    validations:
+      required: true

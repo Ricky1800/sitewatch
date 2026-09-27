@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest a new capability for sitewatch (new alert channel, check type, etc).
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas welcome, especially ones a freelancer maintaining a handful of small-business
+        sites would actually use. See ROADMAP_ISSUES.md for planned work first.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What can't you do today, or what's painful about the current behavior?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How you imagine it working (config shape, CLI flags, output, etc).
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds you're using today, or other approaches you considered.

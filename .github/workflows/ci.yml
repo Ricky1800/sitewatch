@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          check-latest: true
+
+      - name: gofmt
+        if: runner.os != 'Windows'
+        run: |
+          fmt_out="$(gofmt -l .)"
+          if [ -n "$fmt_out" ]; then
+            echo "The following files are not gofmt'd:"
+            echo "$fmt_out"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./...
+
+      - name: go test -race
+        # CGO (required for -race) needs a C toolchain; ubuntu-latest and
+        # macos-latest have one out of the box. Windows runners in this
+        # matrix build/test fine but are skipped here to avoid depending on
+        # a Windows C toolchain just for -race.
+        if: runner.os != 'Windows'
+        run: go test -race ./...
+
+      - name: go build
+        run: go build ./...

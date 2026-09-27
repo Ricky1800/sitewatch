@@ -1,0 +1,31 @@
+[Unit]
+Description=sitewatch — uptime, SSL-expiry, and content monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sitewatch
+Group=sitewatch
+WorkingDirectory=/etc/sitewatch
+ExecStart=/usr/local/bin/sitewatch run --config /etc/sitewatch/sitewatch.yaml
+
+# Read secrets (e.g. SITEWATCH_SMTP_PASSWORD) from an EnvironmentFile that
+# is NOT world-readable, e.g.:
+#   /etc/sitewatch/sitewatch.env containing:
+#     SITEWATCH_SMTP_PASSWORD=an-app-password
+EnvironmentFile=-/etc/sitewatch/sitewatch.env
+
+Restart=on-failure
+RestartSec=5s
+
+# Minimal hardening; sitewatch only needs outbound network access, to read
+# its config file, and to read/write its history file.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/etc/sitewatch
+
+[Install]
+WantedBy=multi-user.target

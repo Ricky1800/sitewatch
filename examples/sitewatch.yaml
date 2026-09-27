@@ -1,0 +1,66 @@
+# Example sitewatch configuration.
+#
+# Copy this file to sitewatch.yaml next to the sitewatch binary (or point
+# --config at it) and edit the checks/alerts sections for your sites.
+#
+# Every duration field accepts Go duration strings: "30s", "5m", "1h30m".
+
+# Applied to any check that doesn't set its own value for these fields.
+defaults:
+  interval: 60s
+  timeout: 10s
+  fail_threshold: 3   # consecutive failures before an alert fires
+  ssl_warn_days: 14   # warn once per day once the cert is this close to expiry
+
+# At least one of these is required for `sitewatch run` to actually notify
+# anyone; omit a section entirely to disable that channel.
+alerts:
+  discord:
+    webhook_url: "https://discord.com/api/webhooks/XXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+  slack:
+    webhook_url: "https://hooks.slack.com/services/XXXXXXX/XXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX"
+
+  webhook:
+    url: "https://example.com/hooks/sitewatch"
+    headers:
+      X-Api-Key: "replace-with-a-shared-secret"
+
+  email:
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    username: "alerts@example.com"
+    from: "alerts@example.com"
+    to:
+      - "oncall@example.com"
+    # sitewatch never reads a password from this file. Set the environment
+    # variable named below before running sitewatch, e.g.:
+    #   export SITEWATCH_SMTP_PASSWORD="an app password, not your real password"
+    password_env: "SITEWATCH_SMTP_PASSWORD"
+
+# History is an append-only JSONL file, compacted automatically once a day.
+history:
+  path: "sitewatch_history.jsonl"
+  max_age_days: 90
+
+checks:
+  - name: "Acme Plumbing — Homepage"
+    url: "https://acmeplumbing.example.com"
+    interval: 60s
+    timeout: 10s
+    expected_status: 200
+    body_contains: "Acme Plumbing"
+    max_response_ms: 3000
+    ssl_warn_days: 14
+    fail_threshold: 3
+
+  - name: "Acme Plumbing — Contact API"
+    url: "https://acmeplumbing.example.com/api/health"
+    interval: 30s
+    timeout: 5s
+    expected_status: 200
+
+  - name: "Riverside Dental"
+    url: "https://riversidedental.example.com"
+    # Everything below is inherited from defaults: interval 60s, timeout
+    # 10s, fail_threshold 3, ssl_warn_days 14.
