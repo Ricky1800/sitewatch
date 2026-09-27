@@ -1,2 +1,3 @@
-# SMTP messages use CRLF line endings; keep golden files byte-exact on every OS.
-internal/alert/testdata/*.txt -text
+# Golden files are compared byte-for-byte (SMTP bodies use CRLF, JSON uses LF);
+# never let git rewrite their line endings on any OS.
+internal/alert/testdata/* -text
