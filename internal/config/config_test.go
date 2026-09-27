@@ -38,6 +38,41 @@ checks:
 	if cfg.History.Path != "sitewatch_history.jsonl" {
 		t.Errorf("expected default history path, got %q", cfg.History.Path)
 	}
+	if cfg.StatusPage.Title != "Status" {
+		t.Errorf("expected default status_page.title 'Status', got %q", cfg.StatusPage.Title)
+	}
+	if cfg.StatusPage.AccentColor != "#2563eb" {
+		t.Errorf("expected default status_page.accent_color, got %q", cfg.StatusPage.AccentColor)
+	}
+}
+
+func TestParse_StatusPageOverrides(t *testing.T) {
+	data := []byte(`
+status_page:
+  title: "Acme Plumbing Status"
+  logo_url: "https://acmeplumbing.example.com/logo.png"
+  accent_color: "#15803d"
+  description: "Live status for our public-facing sites."
+checks:
+  - name: Example
+    url: https://example.com
+`)
+	cfg, err := Parse(data)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if cfg.StatusPage.Title != "Acme Plumbing Status" {
+		t.Errorf("unexpected title: %q", cfg.StatusPage.Title)
+	}
+	if cfg.StatusPage.LogoURL != "https://acmeplumbing.example.com/logo.png" {
+		t.Errorf("unexpected logo_url: %q", cfg.StatusPage.LogoURL)
+	}
+	if cfg.StatusPage.AccentColor != "#15803d" {
+		t.Errorf("unexpected accent_color: %q", cfg.StatusPage.AccentColor)
+	}
+	if cfg.StatusPage.Description != "Live status for our public-facing sites." {
+		t.Errorf("unexpected description: %q", cfg.StatusPage.Description)
+	}
 }
 
 func TestParse_OverridesDefaults(t *testing.T) {

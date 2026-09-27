@@ -5,6 +5,14 @@
 #
 # Every duration field accepts Go duration strings: "30s", "5m", "1h30m".
 
+# Cosmetic details for the generated status page (`sitewatch status`).
+# Every field is optional.
+status_page:
+  title: "Acme Plumbing — Status"
+  logo_url: ""                # optional: shown next to the title
+  accent_color: "#2563eb"     # sparkline color, links, focus rings
+  description: "Live uptime for our website and booking tools."
+
 # Applied to any check that doesn't set its own value for these fields.
 defaults:
   interval: 60s

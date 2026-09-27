@@ -71,6 +71,16 @@ type History struct {
 	MaxAgeDays int    `yaml:"max_age_days"`
 }
 
+// StatusPage configures cosmetic details of the generated static status
+// page. Every field is optional; unset fields fall back to sensible
+// defaults in applyDefaults so `sitewatch status` works with zero config.
+type StatusPage struct {
+	Title       string `yaml:"title"`
+	LogoURL     string `yaml:"logo_url"`
+	AccentColor string `yaml:"accent_color"`
+	Description string `yaml:"description"`
+}
+
 // Check describes one monitored endpoint. Zero-valued fields fall back to
 // Config.Defaults at load time (see applyDefaults).
 type Check struct {
@@ -87,10 +97,11 @@ type Check struct {
 
 // Config is the fully parsed and defaulted contents of sitewatch.yaml.
 type Config struct {
-	Defaults Defaults `yaml:"defaults"`
-	Alerts   Alerts   `yaml:"alerts"`
-	Checks   []Check  `yaml:"checks"`
-	History  History  `yaml:"history"`
+	Defaults   Defaults   `yaml:"defaults"`
+	Alerts     Alerts     `yaml:"alerts"`
+	Checks     []Check    `yaml:"checks"`
+	History    History    `yaml:"history"`
+	StatusPage StatusPage `yaml:"status_page"`
 }
 
 // defaultConfig returns the built-in defaults applied before the YAML
@@ -169,6 +180,12 @@ func applyDefaults(cfg *Config) {
 	}
 	if cfg.History.MaxAgeDays == 0 {
 		cfg.History.MaxAgeDays = 90
+	}
+	if strings.TrimSpace(cfg.StatusPage.Title) == "" {
+		cfg.StatusPage.Title = "Status"
+	}
+	if strings.TrimSpace(cfg.StatusPage.AccentColor) == "" {
+		cfg.StatusPage.AccentColor = "#2563eb"
 	}
 }
 
