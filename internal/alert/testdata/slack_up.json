@@ -1,0 +1,26 @@
+{
+  "text": "Acme Homepage is back UP (https://acme.example.com) — was down for 5m30s",
+  "attachments": [
+    {
+      "color": "good",
+      "text": "Recovered at 2026-03-15 12:00:00 UTC",
+      "fields": [
+        {
+          "title": "Check",
+          "value": "Acme Homepage",
+          "short": true
+        },
+        {
+          "title": "URL",
+          "value": "https://acme.example.com",
+          "short": true
+        },
+        {
+          "title": "Event",
+          "value": "UP",
+          "short": true
+        }
+      ]
+    }
+  ]
+}

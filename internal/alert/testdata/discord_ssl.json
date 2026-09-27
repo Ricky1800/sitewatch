@@ -1,0 +1,27 @@
+{
+  "username": "sitewatch",
+  "embeds": [
+    {
+      "title": "Acme Homepage (https://acme.example.com) SSL certificate expires in 9 day(s) (2026-03-24)",
+      "description": "Renew the certificate soon to avoid an outage.",
+      "color": 15844367,
+      "fields": [
+        {
+          "name": "Check",
+          "value": "Acme Homepage",
+          "inline": true
+        },
+        {
+          "name": "URL",
+          "value": "https://acme.example.com",
+          "inline": true
+        },
+        {
+          "name": "Event",
+          "value": "SSL_EXPIRY",
+          "inline": true
+        }
+      ]
+    }
+  ]
+}

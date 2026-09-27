@@ -1,0 +1,8 @@
+From: alerts@sitewatch.example
+To: oncall@example.com
+Subject: [sitewatch] UP: Acme Homepage
+Content-Type: text/plain; charset=utf-8
+
+Acme Homepage is back UP (https://acme.example.com) — was down for 5m30s
+
+Recovered at 2026-03-15 12:00:00 UTC

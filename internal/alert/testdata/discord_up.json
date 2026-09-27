@@ -1,0 +1,27 @@
+{
+  "username": "sitewatch",
+  "embeds": [
+    {
+      "title": "Acme Homepage is back UP (https://acme.example.com) — was down for 5m30s",
+      "description": "Recovered at 2026-03-15 12:00:00 UTC",
+      "color": 3066993,
+      "fields": [
+        {
+          "name": "Check",
+          "value": "Acme Homepage",
+          "inline": true
+        },
+        {
+          "name": "URL",
+          "value": "https://acme.example.com",
+          "inline": true
+        },
+        {
+          "name": "Event",
+          "value": "UP",
+          "inline": true
+        }
+      ]
+    }
+  ]
+}

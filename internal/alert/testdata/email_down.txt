@@ -1,0 +1,8 @@
+From: alerts@sitewatch.example
+To: oncall@example.com
+Subject: [sitewatch] DOWN: Acme Homepage
+Content-Type: text/plain; charset=utf-8
+
+Acme Homepage is DOWN (https://acme.example.com) — 3 consecutive failures
+
+Last error: dial tcp: connection refused

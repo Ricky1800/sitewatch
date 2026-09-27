@@ -1,0 +1,26 @@
+{
+  "text": "Acme Homepage is DOWN (https://acme.example.com) — 3 consecutive failures",
+  "attachments": [
+    {
+      "color": "danger",
+      "text": "Last error: dial tcp: connection refused",
+      "fields": [
+        {
+          "title": "Check",
+          "value": "Acme Homepage",
+          "short": true
+        },
+        {
+          "title": "URL",
+          "value": "https://acme.example.com",
+          "short": true
+        },
+        {
+          "title": "Event",
+          "value": "DOWN",
+          "short": true
+        }
+      ]
+    }
+  ]
+}

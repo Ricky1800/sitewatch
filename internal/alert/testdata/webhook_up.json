@@ -1,0 +1,8 @@
+{
+  "event": "UP",
+  "check": "Acme Homepage",
+  "url": "https://acme.example.com",
+  "time": "2026-03-15T12:00:00Z",
+  "message": "Acme Homepage is back UP (https://acme.example.com) — was down for 5m30s",
+  "downtime_seconds": 330
+}
