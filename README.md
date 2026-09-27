@@ -60,6 +60,12 @@ cron wrapper that emails on non-zero exit).
 `sitewatch.yaml`:
 
 ```yaml
+status_page:               # optional; all fields optional. See "Status page" below.
+  title: "Acme Plumbing — Status"
+  logo_url: ""
+  accent_color: "#2563eb"
+  description: "Live uptime for our website and booking tools."
+
 defaults:
   interval: 60s          # how often to check, per-check overridable
   timeout: 10s            # per-request timeout, per-check overridable
@@ -159,17 +165,46 @@ too if that matters for your setup).
 ./sitewatch status --out status.html
 ```
 
-Produces a single self-contained HTML file (no external CSS/JS/fonts —
-safe to open offline or serve from anywhere) showing, per check: current
-state (a colored UP/DOWN/UNKNOWN badge), last-checked time, 24h/7d/30d
-uptime percentages, and an inline SVG sparkline of recent response times.
+Produces a single self-contained HTML file (no external CSS/JS/fonts, no
+build step, no CDN dependency — safe to open offline or serve from
+anywhere) that reads like a modern hosted status page:
+
+- An overall-status banner ("All Systems Operational" / "Partial Outage" /
+  "Major Outage" / "No Checks Configured"), derived from every check's
+  latest result.
+- A card per check with a colored UP/DOWN/UNKNOWN badge, last-checked
+  time, and 24h/7d/30d uptime percentages.
+- A **90-day uptime bar**: one segment per calendar day, colored by that
+  day's uptime (green ≥ 99.9%, yellow 95–99.9%, red < 95%, gray = no
+  data). Hover or Tab-focus any day for a tooltip with the exact date and
+  percentage — the color is never the only signal, since the same text
+  is also in the segment's `aria-label`.
+- An inline SVG **response-time sparkline** of the most recent checks.
+- **Incident history**, derived entirely from down→up (and down→still
+  down) transitions in the history file — no separate incident log to
+  maintain. Each entry shows start time, end time (or "ongoing"),
+  duration, and the last error message seen during the incident.
+- A **"Last updated"** timestamp for the page generation itself.
+
+Cosmetic details come from an optional `status_page:` config block —
+`title`, `logo_url`, `accent_color` (used for the sparkline color, links,
+and focus rings), and `description` — see `examples/sitewatch.yaml`.
+
+Light/dark mode follows `prefers-color-scheme` automatically. The layout
+is responsive (cards stack, uptime bar segments shrink) down to phone
+width, and status is always conveyed through text/labels in addition to
+color for accessibility.
+
 Run it on a schedule (cron, or a CI job) and publish the output to your
 static host of choice (GitHub Pages, S3, Netlify, anywhere).
 
-The page renders a table: check name and URL, a status badge, "last
-checked", the three uptime columns, and a small inline line chart of
-response times — light/dark aware via `prefers-color-scheme`, and legible
-at phone width.
+**See it yourself:** `go build -o sitewatch . && ./sitewatch check
+--config examples/sitewatch.yaml` a few times (or hand-craft a few lines
+in your `history.path` JSONL file) to get some history, then
+`./sitewatch status --config examples/sitewatch.yaml --out status.html`
+and open `status.html` in a browser. With 90 days of real history you'll
+see the full uptime bar; with a fresh history file most days will show
+as "no data" (gray) until sitewatch has been running a while.
 
 ## Running it
 

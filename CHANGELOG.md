@@ -5,6 +5,36 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-09-27
+
+### Added
+
+- `status_page` config block (`title`, `logo_url`, `accent_color`,
+  `description`) for cosmetic control over the generated status page,
+  with sensible defaults so it's entirely optional.
+- Overall-status banner ("All Systems Operational" / "Partial Outage" /
+  "Major Outage" / "No Checks Configured") derived from every check's
+  latest state.
+- Per-check 90-day uptime bar: one segment per calendar day, colored by
+  that day's uptime, with a hover/keyboard-focus tooltip showing the
+  exact date and percentage (also exposed via `aria-label` so status is
+  never conveyed by color alone).
+- Incident history per check, derived from down↔up transitions in the
+  history file (no separate incident log): start/end time, duration, and
+  the last error seen, including a still-open "ongoing" incident.
+- "Last updated" timestamp for the page itself (separate from each
+  check's own "last checked").
+
+### Changed
+
+- Status page redesign: replaced the single table with a status-banner +
+  per-service card layout, styled to the standard of a modern hosted
+  status page. Still zero external CSS/JS/fonts, still light/dark aware
+  via `prefers-color-scheme`, still responsive down to phone width.
+- `internal/status.BuildPageData` / `PageData` / `CheckStatus` gained new
+  fields (`OverallState`, `UptimeBar`, `Incidents`, `Title`, `LogoURL`,
+  `AccentColor`, `Description`) — additive; existing fields are unchanged.
+
 ## [0.1.0] - 2026-09-26
 
 ### Added
@@ -34,4 +64,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   GitHub Actions CI (gofmt/vet/test/race/build) and a tag-triggered release
   workflow.
 
+[0.2.0]: https://github.com/Ricky1800/sitewatch/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Ricky1800/sitewatch/releases/tag/v0.1.0
