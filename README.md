@@ -1,9 +1,15 @@
 # sitewatch
 
+[![CI](https://github.com/Ricky1800/sitewatch/actions/workflows/ci.yml/badge.svg)](https://github.com/Ricky1800/sitewatch/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/tag/Ricky1800/sitewatch?label=release)](https://github.com/Ricky1800/sitewatch/tags)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 A single-binary uptime, SSL-expiry, and content monitor for small-business
 websites. No database, no SaaS subscription, no dashboard to host — just a
 YAML config, a binary, and (optionally) a static HTML status page you can
 drop anywhere.
+
+![sitewatch status page — 90-day uptime bars, sparklines, incident history](docs/images/status-page-light.png)
 
 ## The problem
 
@@ -194,6 +200,16 @@ Light/dark mode follows `prefers-color-scheme` automatically. The layout
 is responsive (cards stack, uptime bar segments shrink) down to phone
 width, and status is always conveyed through text/labels in addition to
 color for accessibility.
+
+### Screenshots
+
+Rendered from a realistic synthetic 90-day history (three checks, a couple
+of incidents, ordinary jitter in between) — light and dark follow
+`prefers-color-scheme`, no toggle required:
+
+| Light | Dark |
+|---|---|
+| ![Status page, light mode](docs/images/status-page-light.png) | ![Status page, dark mode](docs/images/status-page-dark.png) |
 
 Run it on a schedule (cron, or a CI job) and publish the output to your
 static host of choice (GitHub Pages, S3, Netlify, anywhere).
