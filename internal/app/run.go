@@ -58,7 +58,13 @@ func RunDaemon(args []string, stdout, stderr io.Writer) int {
 		states:  make(map[string]*state.CheckState),
 		log:     stdout,
 	}
-	d.alerts.Logf = func(format string, args ...any) { fmt.Fprintf(stderr, format+"\n", args...) }
+	// Alert delivery errors are reported from many check goroutines at once.
+	var stderrMu sync.Mutex
+	d.alerts.Logf = func(format string, args ...any) {
+		stderrMu.Lock()
+		defer stderrMu.Unlock()
+		fmt.Fprintf(stderr, format+"\n", args...)
+	}
 
 	fmt.Fprintf(stdout, "sitewatch %s starting: %d check(s), history=%s\n", Version, len(cfg.Checks), cfg.History.Path)
 	d.run(ctx)
@@ -75,8 +81,20 @@ type daemon struct {
 	alerts  *alert.Manager
 	log     io.Writer
 
+	// logMu serializes writes to log: every check goroutine logs through
+	// logf, and most io.Writers (bytes.Buffer, bufio.Writer) are not safe
+	// for concurrent use.
+	logMu sync.Mutex
+
 	mu     sync.Mutex
 	states map[string]*state.CheckState
+}
+
+// logf writes one log line to d.log, safe for concurrent use.
+func (d *daemon) logf(format string, args ...any) {
+	d.logMu.Lock()
+	defer d.logMu.Unlock()
+	fmt.Fprintf(d.log, format, args...)
 }
 
 func (d *daemon) stateFor(name string) *state.CheckState {
@@ -111,7 +129,7 @@ func (d *daemon) run(ctx context.Context) {
 	}()
 
 	<-ctx.Done()
-	fmt.Fprintln(d.log, "sitewatch: shutdown signal received, waiting for in-flight checks...")
+	d.logf("sitewatch: shutdown signal received, waiting for in-flight checks...\n")
 	wg.Wait()
 }
 
@@ -144,7 +162,7 @@ func (d *daemon) runOnce(ctx context.Context, chk config.Check) {
 	tr := s.Record(res.Success, chk.FailThreshold, now)
 	switch tr.Kind {
 	case state.TransitionToDown:
-		fmt.Fprintf(d.log, "%s DOWN: %s\n", chk.Name, res.Error)
+		d.logf("%s DOWN: %s\n", chk.Name, res.Error)
 		d.alerts.Send(ctx, alert.Event{
 			Kind:             alert.Down,
 			CheckName:        chk.Name,
@@ -154,7 +172,7 @@ func (d *daemon) runOnce(ctx context.Context, chk config.Check) {
 			Error:            res.Error,
 		})
 	case state.TransitionToUp:
-		fmt.Fprintf(d.log, "%s UP (was down %s)\n", chk.Name, tr.Downtime.Round(time.Second))
+		d.logf("%s UP (was down %s)\n", chk.Name, tr.Downtime.Round(time.Second))
 		d.alerts.Send(ctx, alert.Event{
 			Kind:      alert.Up,
 			CheckName: chk.Name,
@@ -167,7 +185,7 @@ func (d *daemon) runOnce(ctx context.Context, chk config.Check) {
 	if res.TLSExpiry != nil {
 		daysLeft := int(res.TLSExpiry.Sub(now).Hours() / 24)
 		if s.ShouldWarnSSL(*res.TLSExpiry, chk.SSLWarnDays, now) {
-			fmt.Fprintf(d.log, "%s SSL certificate expires in %d day(s)\n", chk.Name, daysLeft)
+			d.logf("%s SSL certificate expires in %d day(s)\n", chk.Name, daysLeft)
 			d.alerts.Send(ctx, alert.Event{
 				Kind:        alert.SSLExpiry,
 				CheckName:   chk.Name,
@@ -188,7 +206,7 @@ func (d *daemon) runOnce(ctx context.Context, chk config.Check) {
 		Error:          res.Error,
 	}
 	if err := history.Append(d.cfg.History.Path, rec); err != nil {
-		fmt.Fprintf(d.log, "history: %v\n", err)
+		d.logf("history: %v\n", err)
 	}
 }
 
@@ -213,6 +231,6 @@ func (d *daemon) scheduleCompaction(ctx context.Context) {
 
 func (d *daemon) compactOnce(maxAge time.Duration) {
 	if err := history.Compact(d.cfg.History.Path, maxAge, d.clock.Now()); err != nil {
-		fmt.Fprintf(d.log, "history compaction: %v\n", err)
+		d.logf("history compaction: %v\n", err)
 	}
 }
