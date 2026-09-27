@@ -9,7 +9,7 @@ import (
 )
 
 // Version is sitewatch's release version. Bump alongside CHANGELOG.md.
-const Version = "0.1.0"
+const Version = "0.2.0"
 
 // RunVersion prints the version string.
 func RunVersion(stdout io.Writer) int {

@@ -3,103 +3,330 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Status</title>
+<title>{{.Title}}</title>
 <style>
   :root {
     color-scheme: light dark;
+    --accent: {{.AccentColor}};
     --up: #1a7f37;
+    --up-bg: #dafbe1;
     --down: #cf222e;
-    --unknown: #8a8f98;
+    --down-bg: #ffebe9;
+    --warn: #9a6700;
+    --warn-bg: #fff8c5;
+    --unknown: #6e7781;
+    --unknown-bg: #eef0f2;
     --bg: #ffffff;
+    --bg-inset: #f6f8fa;
     --fg: #1b1f23;
     --muted: #6a737d;
     --border: #e1e4e8;
+    --shadow: 0 1px 2px rgba(27, 31, 35, 0.06), 0 4px 12px rgba(27, 31, 35, 0.06);
   }
   @media (prefers-color-scheme: dark) {
     :root {
+      --up-bg: #0f2b1a;
+      --down-bg: #3c1414;
+      --warn-bg: #3a2e05;
+      --unknown-bg: #22262b;
       --bg: #0d1117;
+      --bg-inset: #161b22;
       --fg: #e6edf3;
       --muted: #8b949e;
       --border: #30363d;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
     }
+  }
+  :root[data-theme="light"] {
+    --up-bg: #dafbe1; --down-bg: #ffebe9; --warn-bg: #fff8c5; --unknown-bg: #eef0f2;
+    --bg: #ffffff; --bg-inset: #f6f8fa; --fg: #1b1f23; --muted: #6a737d; --border: #e1e4e8;
+  }
+  :root[data-theme="dark"] {
+    --up-bg: #0f2b1a; --down-bg: #3c1414; --warn-bg: #3a2e05; --unknown-bg: #22262b;
+    --bg: #0d1117; --bg-inset: #161b22; --fg: #e6edf3; --muted: #8b949e; --border: #30363d;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    padding: 2rem 1rem;
+    padding: 2rem 1rem 3rem;
     background: var(--bg);
     color: var(--fg);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
   }
-  .wrap { max-width: 880px; margin: 0 auto; }
-  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  .generated { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td {
-    text-align: left;
-    padding: 0.65rem 0.75rem;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
-    vertical-align: middle;
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
   }
-  th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .page-header img { height: 32px; width: auto; border-radius: 4px; }
+  .page-header h1 { font-size: 1.5rem; margin: 0; }
+  .description { color: var(--muted); font-size: 0.95rem; margin: 0.15rem 0 1.25rem; }
+
+  .banner {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.15rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border);
+  }
+  .banner .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .banner.up { background: var(--up-bg); color: var(--up); }
+  .banner.up .dot { background: var(--up); }
+  .banner.down { background: var(--down-bg); color: var(--down); }
+  .banner.down .dot { background: var(--down); }
+  .banner.partial { background: var(--warn-bg); color: var(--warn); }
+  .banner.partial .dot { background: var(--warn); }
+  .banner.unknown { background: var(--unknown-bg); color: var(--unknown); }
+  .banner.unknown .dot { background: var(--unknown); }
+
+  .generated { color: var(--muted); font-size: 0.8rem; margin-bottom: 1.75rem; }
+
+  .checks { display: flex; flex-direction: column; gap: 1rem; }
+  .check-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem 1.25rem;
+    background: var(--bg);
+    box-shadow: var(--shadow);
+  }
+  .check-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.15rem;
+  }
+  .check-name-wrap { min-width: 0; }
+  .check-name { font-weight: 600; font-size: 1rem; }
+  .check-url { color: var(--muted); font-size: 0.8rem; display: block; word-break: break-all; }
   .badge {
-    display: inline-block;
-    padding: 0.15rem 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 999px;
     font-size: 0.75rem;
-    font-weight: 600;
-    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
   }
-  .badge.up { background: var(--up); }
-  .badge.down { background: var(--down); }
-  .badge.unknown { background: var(--unknown); }
-  .name { font-weight: 600; }
-  .url { color: var(--muted); font-size: 0.8rem; display: block; word-break: break-all; }
-  .error { color: var(--down); font-size: 0.8rem; margin-top: 0.2rem; }
-  .sparkline { color: var(--fg); display: block; }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+  .badge.up { background: var(--up-bg); color: var(--up); }
+  .badge.up::before { background: var(--up); }
+  .badge.down { background: var(--down-bg); color: var(--down); }
+  .badge.down::before { background: var(--down); }
+  .badge.unknown { background: var(--unknown-bg); color: var(--unknown); }
+  .badge.unknown::before { background: var(--unknown); }
+  .check-error {
+    color: var(--down);
+    font-size: 0.82rem;
+    margin: 0.35rem 0 0;
+  }
+
+  .metrics-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 0.85rem 0 0.65rem;
+  }
+  .metric { min-width: 4.5rem; }
+  .metric .metric-label { display: block; color: var(--muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric .metric-value { font-size: 0.95rem; font-weight: 600; }
+
+  .uptime-bar-label {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 0.7rem;
+    margin-bottom: 0.3rem;
+  }
+  .uptime-bar {
+    display: flex;
+    gap: 1.5px;
+    align-items: stretch;
+    height: 28px;
+    margin-bottom: 1rem;
+  }
+  .day-segment {
+    flex: 1 1 0;
+    min-width: 2px;
+    border-radius: 2px;
+    position: relative;
+    cursor: default;
+  }
+  .day-segment.good { background: var(--up); }
+  .day-segment.warn { background: var(--warn); }
+  .day-segment.bad { background: var(--down); }
+  .day-segment.unknown { background: var(--unknown-bg); border: 1px solid var(--border); }
+  .day-segment .tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) translateY(2px);
+    background: var(--fg);
+    color: var(--bg);
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease, transform 100ms ease;
+    z-index: 2;
+  }
+  .day-segment:hover .tooltip,
+  .day-segment:focus-visible .tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .day-segment:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .response-time-label { color: var(--muted); font-size: 0.7rem; margin-bottom: 0.3rem; }
+  .sparkline { color: var(--accent); display: block; }
   .sparkline-empty { color: var(--muted); }
-  footer { margin-top: 2rem; color: var(--muted); font-size: 0.8rem; }
-  a { color: inherit; }
+
+  details.incidents { margin-top: 0.9rem; }
+  details.incidents summary {
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    list-style: none;
+  }
+  details.incidents summary::-webkit-details-marker { display: none; }
+  details.incidents summary::before { content: "▸ "; }
+  details.incidents[open] summary::before { content: "▾ "; }
+  .incident-list {
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .incident {
+    border-left: 3px solid var(--down);
+    padding: 0.3rem 0 0.3rem 0.65rem;
+    font-size: 0.82rem;
+  }
+  .incident.ongoing { border-left-color: var(--warn); }
+  .incident-time { font-weight: 600; }
+  .incident-duration { color: var(--muted); }
+  .incident-error { color: var(--muted); margin-top: 0.1rem; }
+  .no-incidents { color: var(--muted); font-size: 0.82rem; margin: 0.5rem 0 0; }
+
+  .empty-state {
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  footer { margin-top: 2.5rem; color: var(--muted); font-size: 0.8rem; text-align: center; }
+  a { color: var(--accent); }
+
+  @media (max-width: 560px) {
+    .metrics-row { gap: 1rem; }
+    .check-card { padding: 1rem; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Status</h1>
-  <div class="generated">Generated {{.GeneratedAtDisplay}}</div>
+  <div class="page-header">
+    {{if .LogoURL}}<img src="{{.LogoURL}}" alt="">{{end}}
+    <h1>{{.Title}}</h1>
+  </div>
+  {{if .Description}}<p class="description">{{.Description}}</p>{{end}}
 
-  <table>
-    <thead>
-      <tr>
-        <th>Check</th>
-        <th>Status</th>
-        <th>Last checked</th>
-        <th>24h</th>
-        <th>7d</th>
-        <th>30d</th>
-        <th>Response time</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{range .Checks}}
-      <tr>
-        <td>
-          <span class="name">{{.Name}}</span>
-          <span class="url">{{.URL}}</span>
-          {{if .LastError}}<div class="error">{{.LastError}}</div>{{end}}
-        </td>
-        <td><span class="badge {{.StateClass}}">{{.State}}</span></td>
-        <td>{{.LastCheckedDisplay}}</td>
-        <td>{{.Uptime24h}}</td>
-        <td>{{.Uptime7d}}</td>
-        <td>{{.Uptime30d}}</td>
-        <td>{{.SparklineSVG}}</td>
-      </tr>
-      {{else}}
-      <tr><td colspan="7">No checks configured.</td></tr>
-      {{end}}
-    </tbody>
-  </table>
+  <div class="banner {{.OverallStateClass}}" role="status">
+    <span class="dot" aria-hidden="true"></span>
+    <span>{{.OverallState}}</span>
+  </div>
+  <div class="generated">Last updated {{.GeneratedAtDisplay}}</div>
+
+  {{if .Checks}}
+  <div class="checks">
+    {{range .Checks}}
+    <section class="check-card">
+      <div class="check-head">
+        <div class="check-name-wrap">
+          <span class="check-name">{{.Name}}</span>
+          <span class="check-url">{{.URL}}</span>
+        </div>
+        <span class="badge {{.StateClass}}">{{.State}}</span>
+      </div>
+      {{if .LastError}}<p class="check-error">{{.LastError}}</p>{{end}}
+
+      <div class="metrics-row">
+        <div class="metric">
+          <span class="metric-label">Last checked</span>
+          <span class="metric-value">{{.LastCheckedDisplay}}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">24h</span>
+          <span class="metric-value">{{.Uptime24h}}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">7d</span>
+          <span class="metric-value">{{.Uptime7d}}</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">30d</span>
+          <span class="metric-value">{{.Uptime30d}}</span>
+        </div>
+      </div>
+
+      <div class="uptime-bar-label">
+        <span>90-day uptime</span>
+      </div>
+      <div class="uptime-bar">
+        {{range .UptimeBar}}
+        <span class="day-segment {{.Class}}" tabindex="0" aria-label="{{.TooltipText}}">
+          <span class="tooltip" role="tooltip">{{.TooltipText}}</span>
+        </span>
+        {{end}}
+      </div>
+
+      <div class="response-time-label">Response time</div>
+      {{.SparklineSVG}}
+
+      <details class="incidents">
+        <summary>Incident history ({{len .Incidents}})</summary>
+        {{if .Incidents}}
+        <ul class="incident-list">
+          {{range .Incidents}}
+          <li class="incident{{if .Ongoing}} ongoing{{end}}">
+            <div>
+              <span class="incident-time">{{.StartDisplay}}</span>
+              {{if .Ongoing}} &mdash; ongoing{{else}} &mdash; {{.EndDisplay}}{{end}}
+              <span class="incident-duration">({{.DurationText}})</span>
+            </div>
+            {{if .Error}}<div class="incident-error">{{.Error}}</div>{{end}}
+          </li>
+          {{end}}
+        </ul>
+        {{else}}
+        <p class="no-incidents">No incidents in recorded history.</p>
+        {{end}}
+      </details>
+    </section>
+    {{end}}
+  </div>
+  {{else}}
+  <div class="empty-state">No checks configured.</div>
+  {{end}}
 
   <footer>Generated by <a href="https://github.com/Ricky1800/sitewatch">sitewatch</a>.</footer>
 </div>
