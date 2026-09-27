@@ -1,0 +1,20 @@
+# Build artifacts
+/sitewatch
+/sitewatch.exe
+/dist/
+
+# Runtime data a user's own sitewatch instance would generate
+*.jsonl
+status.html
+sitewatch.yaml.local
+
+# Go
+*.test
+*.out
+coverage.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
