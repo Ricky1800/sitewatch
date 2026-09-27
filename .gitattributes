@@ -1,0 +1,2 @@
+# SMTP messages use CRLF line endings; keep golden files byte-exact on every OS.
+internal/alert/testdata/*.txt -text
