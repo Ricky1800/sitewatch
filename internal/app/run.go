@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -33,6 +34,7 @@ func RunDaemon(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	configPath := fs.String("config", "sitewatch.yaml", "path to sitewatch.yaml")
+	metricsAddr := fs.String("metrics-addr", "", "address for the Prometheus /metrics endpoint (disabled by default)")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -56,6 +58,7 @@ func RunDaemon(args []string, stdout, stderr io.Writer) int {
 		clock:   clock.Real{},
 		alerts:  alert.NewManager(cfg.Alerts),
 		states:  make(map[string]*state.CheckState),
+		metrics: make(map[string]metricSample),
 		log:     stdout,
 	}
 	// Alert delivery errors are reported from many check goroutines at once.
@@ -66,8 +69,31 @@ func RunDaemon(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, format+"\n", args...)
 	}
 
+	var metricsServer *http.Server
+	var metricsDone chan error
+	if *metricsAddr != "" {
+		server, listener, done, startErr := startMetricsServer(d, *metricsAddr)
+		if startErr != nil {
+			fmt.Fprintf(stderr, "starting metrics endpoint: %v\n", startErr)
+			return 2
+		}
+		metricsServer, metricsDone = server, done
+		d.logf("metrics endpoint listening on %s\n", listener.Addr())
+	}
+
 	fmt.Fprintf(stdout, "sitewatch %s starting: %d check(s), history=%s\n", Version, len(cfg.Checks), cfg.History.Path)
 	d.run(ctx)
+	if metricsServer != nil {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+			d.logf("metrics endpoint shutdown: %v\n", err)
+			_ = metricsServer.Close()
+		}
+		cancel()
+		if err := <-metricsDone; err != nil && !errors.Is(err, http.ErrServerClosed) {
+			d.logf("metrics endpoint: %v\n", err)
+		}
+	}
 	fmt.Fprintln(stdout, "sitewatch: shutdown complete")
 	return 0
 }
@@ -86,8 +112,9 @@ type daemon struct {
 	// for concurrent use.
 	logMu sync.Mutex
 
-	mu     sync.Mutex
-	states map[string]*state.CheckState
+	mu      sync.Mutex
+	states  map[string]*state.CheckState
+	metrics map[string]metricSample // protected by mu; latest completed result per check
 }
 
 // logf writes one log line to d.log, safe for concurrent use.
@@ -159,7 +186,20 @@ func (d *daemon) runOnce(ctx context.Context, chk config.Check) {
 	now := d.clock.Now()
 	s := d.stateFor(chk.Name)
 
+	d.mu.Lock()
 	tr := s.Record(res.Success, chk.FailThreshold, now)
+	shouldWarnSSL := false
+	sslDaysLeft := 0
+	if res.TLSExpiry != nil {
+		sslDaysLeft = int(res.TLSExpiry.Sub(now).Hours() / 24)
+		shouldWarnSSL = s.ShouldWarnSSL(*res.TLSExpiry, chk.SSLWarnDays, now)
+	}
+	if d.metrics == nil {
+		d.metrics = make(map[string]metricSample)
+	}
+	d.metrics[chk.Name] = metricSample{status: s.Current, responseTime: res.ResponseTime}
+	d.mu.Unlock()
+
 	switch tr.Kind {
 	case state.TransitionToDown:
 		d.logf("%s DOWN: %s\n", chk.Name, res.Error)
@@ -182,19 +222,16 @@ func (d *daemon) runOnce(ctx context.Context, chk config.Check) {
 		})
 	}
 
-	if res.TLSExpiry != nil {
-		daysLeft := int(res.TLSExpiry.Sub(now).Hours() / 24)
-		if s.ShouldWarnSSL(*res.TLSExpiry, chk.SSLWarnDays, now) {
-			d.logf("%s SSL certificate expires in %d day(s)\n", chk.Name, daysLeft)
-			d.alerts.Send(ctx, alert.Event{
-				Kind:        alert.SSLExpiry,
-				CheckName:   chk.Name,
-				URL:         chk.URL,
-				Time:        now,
-				SSLExpiry:   *res.TLSExpiry,
-				SSLDaysLeft: daysLeft,
-			})
-		}
+	if res.TLSExpiry != nil && shouldWarnSSL {
+		d.logf("%s SSL certificate expires in %d day(s)\n", chk.Name, sslDaysLeft)
+		d.alerts.Send(ctx, alert.Event{
+			Kind:        alert.SSLExpiry,
+			CheckName:   chk.Name,
+			URL:         chk.URL,
+			Time:        now,
+			SSLExpiry:   *res.TLSExpiry,
+			SSLDaysLeft: sslDaysLeft,
+		})
 	}
 
 	rec := history.Record{
