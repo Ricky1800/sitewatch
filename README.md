@@ -106,6 +106,8 @@ checks:
     timeout: 10s                         # optional
     expected_status: 200                 # optional, default 200
     body_contains: "Acme Plumbing"        # optional substring the response must contain
+    # body_matches: 'Price: \$\d+\.\d{2}' # optional regexp, alternative to body_contains
+    # body_not_contains: "Error 500"         # optional text the response must not contain
     max_response_ms: 3000                # optional response-time budget
     ssl_warn_days: 14                    # optional
     fail_threshold: 3                    # optional

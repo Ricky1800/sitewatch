@@ -191,3 +191,31 @@ func TestEvaluate_BodyContainsPure(t *testing.T) {
 		t.Fatal("expected mismatch to fail")
 	}
 }
+
+func TestEvaluate_BodyMatchesAndBodyNotContainsPure(t *testing.T) {
+	cfg, err := config.Parse([]byte(`checks:
+  - name: Price
+    url: https://example.com
+    body_matches: '^Price: \$[0-9]+\.[0-9]{2}$'
+    body_not_contains: "Error 500"
+`))
+	if err != nil {
+		t.Fatalf("config.Parse: %v", err)
+	}
+	chk := cfg.Checks[0]
+
+	ok := Evaluate(chk, time.Now(), Metrics{StatusCode: 200, Body: "Price: $12.95"})
+	if !ok.Success {
+		t.Fatalf("expected matching body to pass, got: %s", ok.Error)
+	}
+
+	regexpMismatch := Evaluate(chk, time.Now(), Metrics{StatusCode: 200, Body: "Price: unknown"})
+	if regexpMismatch.Success {
+		t.Fatal("expected non-matching body to fail")
+	}
+
+	forbiddenText := Evaluate(chk, time.Now(), Metrics{StatusCode: 200, Body: "Price: $12.95 Error 500"})
+	if forbiddenText.Success {
+		t.Fatal("expected body containing forbidden text to fail")
+	}
+}

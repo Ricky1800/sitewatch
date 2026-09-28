@@ -157,6 +157,18 @@ func Evaluate(chk config.Check, now time.Time, m Metrics) Result {
 		return res
 	}
 
+	if chk.BodyMatches != "" && !chk.MatchesBody(m.Body) {
+		res.Success = false
+		res.Error = "response body did not match expected pattern"
+		return res
+	}
+
+	if chk.BodyNotContains != "" && strings.Contains(m.Body, chk.BodyNotContains) {
+		res.Success = false
+		res.Error = "response body contained forbidden text"
+		return res
+	}
+
 	if chk.MaxResponseMS > 0 && m.ResponseTime > time.Duration(chk.MaxResponseMS)*time.Millisecond {
 		res.Success = false
 		res.Error = "response time exceeded max_response_ms"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -84,15 +85,24 @@ type StatusPage struct {
 // Check describes one monitored endpoint. Zero-valued fields fall back to
 // Config.Defaults at load time (see applyDefaults).
 type Check struct {
-	Name          string   `yaml:"name"`
-	URL           string   `yaml:"url"`
-	Interval      Duration `yaml:"interval"`
-	Timeout       Duration `yaml:"timeout"`
-	ExpectStatus  int      `yaml:"expected_status"`
-	BodyContains  string   `yaml:"body_contains"`
-	MaxResponseMS int      `yaml:"max_response_ms"`
-	SSLWarnDays   int      `yaml:"ssl_warn_days"`
-	FailThreshold int      `yaml:"fail_threshold"`
+	Name            string   `yaml:"name"`
+	URL             string   `yaml:"url"`
+	Interval        Duration `yaml:"interval"`
+	Timeout         Duration `yaml:"timeout"`
+	ExpectStatus    int      `yaml:"expected_status"`
+	BodyContains    string   `yaml:"body_contains"`
+	BodyMatches     string   `yaml:"body_matches"`
+	BodyNotContains string   `yaml:"body_not_contains"`
+	MaxResponseMS   int      `yaml:"max_response_ms"`
+	SSLWarnDays     int      `yaml:"ssl_warn_days"`
+	FailThreshold   int      `yaml:"fail_threshold"`
+	bodyMatcher     *regexp.Regexp
+}
+
+// MatchesBody reports whether body matches the configured body_matches
+// expression.
+func (c Check) MatchesBody(body string) bool {
+	return c.bodyMatcher != nil && c.bodyMatcher.MatchString(body)
 }
 
 // Config is the fully parsed and defaulted contents of sitewatch.yaml.
@@ -275,6 +285,25 @@ func validate(cfg *Config, doc *yaml.Node) ValidationErrors {
 				Line:    lineOf(doc, "checks", i, "expected_status"),
 				Message: fmt.Sprintf("must be a valid HTTP status code (got %d)", c.ExpectStatus),
 			})
+		}
+		if c.BodyContains != "" && c.BodyMatches != "" {
+			errs = append(errs, FieldError{
+				Path:    base + ".body_matches",
+				Line:    lineOf(doc, "checks", i, "body_matches"),
+				Message: "cannot be used with body_contains",
+			})
+		}
+		if c.BodyMatches != "" {
+			matcher, err := regexp.Compile(c.BodyMatches)
+			if err != nil {
+				errs = append(errs, FieldError{
+					Path:    base + ".body_matches",
+					Line:    lineOf(doc, "checks", i, "body_matches"),
+					Message: fmt.Sprintf("invalid regular expression: %v", err),
+				})
+			} else {
+				cfg.Checks[i].bodyMatcher = matcher
+			}
 		}
 		if c.MaxResponseMS < 0 {
 			errs = append(errs, FieldError{Path: base + ".max_response_ms", Line: lineOf(doc, "checks", i, "max_response_ms"), Message: "must be >= 0"})

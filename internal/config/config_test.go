@@ -350,3 +350,82 @@ func TestEmailAlert_PasswordFromEnv(t *testing.T) {
 		t.Errorf("expected empty password when password_env unset, got %q", got)
 	}
 }
+
+func TestParse_BodyMatches(t *testing.T) {
+	data := []byte(`checks:
+  - name: Price
+    url: https://example.com
+    body_matches: '^Price: \$[0-9]+\.[0-9]{2}$'
+`)
+	cfg, err := Parse(data)
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+
+	check := cfg.Checks[0]
+	if check.BodyMatches == "" {
+		t.Fatal("expected body_matches to be retained")
+	}
+	if !check.MatchesBody("Price: $12.95") {
+		t.Error("expected regexp to match a formatted price")
+	}
+	if check.MatchesBody("Price: unknown") {
+		t.Error("did not expect regexp to match an unformatted price")
+	}
+}
+
+func TestParse_InvalidBodyMatchesReportsLine(t *testing.T) {
+	data := []byte(`checks:
+  - name: Price
+    url: https://example.com
+    body_matches: '['
+`)
+	_, err := Parse(data)
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+
+	ve, ok := err.(ValidationErrors)
+	if !ok {
+		t.Fatalf("expected ValidationErrors, got %T", err)
+	}
+	for _, fe := range ve {
+		if fe.Path == "checks[0].body_matches" {
+			if fe.Line != 4 {
+				t.Errorf("expected body_matches error on line 4, got line %d", fe.Line)
+			}
+			if !strings.Contains(fe.Message, "invalid regular expression") {
+				t.Errorf("unexpected error message: %s", fe.Message)
+			}
+			return
+		}
+	}
+	t.Fatalf("expected a checks[0].body_matches error, got: %v", ve)
+}
+
+func TestParse_BodyContainsAndBodyMatchesAreMutuallyExclusive(t *testing.T) {
+	data := []byte(`checks:
+  - name: Price
+    url: https://example.com
+    body_contains: Price
+    body_matches: '^Price:'
+`)
+	_, err := Parse(data)
+	if err == nil {
+		t.Fatal("expected validation error")
+	}
+
+	ve, ok := err.(ValidationErrors)
+	if !ok {
+		t.Fatalf("expected ValidationErrors, got %T", err)
+	}
+	for _, fe := range ve {
+		if fe.Path == "checks[0].body_matches" {
+			if fe.Line != 5 {
+				t.Errorf("expected mutual-exclusion error on line 5, got line %d", fe.Line)
+			}
+			return
+		}
+	}
+	t.Fatalf("expected a checks[0].body_matches error, got: %v", ve)
+}
