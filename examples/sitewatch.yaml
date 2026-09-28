@@ -58,6 +58,8 @@ checks:
     timeout: 10s
     expected_status: 200
     body_contains: "Acme Plumbing"
+    # body_matches: 'Price: \$\d+\.\d{2}' # alternative to body_contains
+    # body_not_contains: "Error 500"         # text the response must not contain
     max_response_ms: 3000
     ssl_warn_days: 14
     fail_threshold: 3
