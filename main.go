@@ -43,8 +43,9 @@ func printUsage(w *os.File) {
 	fmt.Fprint(w, `sitewatch — uptime, SSL-expiry, and content monitor for small-business websites
 
 Usage:
-  sitewatch run [--config sitewatch.yaml]
+  sitewatch run [--config sitewatch.yaml] [--metrics-addr address]
       Start the monitoring daemon. Runs until SIGINT/SIGTERM.
+      Expose Prometheus metrics at /metrics on the given address (off by default).
 
   sitewatch check [--config sitewatch.yaml] [--json]
       Run every configured check once and print the results.

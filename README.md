@@ -61,6 +61,15 @@ cron wrapper that emails on non-zero exit).
 | `sitewatch status [--config sitewatch.yaml] [--out status.html]` | Generate a static HTML status page from recorded history. |
 | `sitewatch version` | Print the version. |
 
+## Prometheus metrics
+
+Start the daemon with `sitewatch run --metrics-addr 127.0.0.1:9469` to enable an
+HTTP `/metrics` endpoint; the flag is off by default. It exposes `sitewatch_up`
+(1 when up, 0 when down) and `sitewatch_response_time_ms` from the daemon's
+latest in-memory check results. The up sample is omitted until a check has
+left its initial unknown state. The endpoint has no authentication, so bind
+it to loopback or protect the port at your network boundary.
+
 ## Config reference
 
 `sitewatch.yaml`:
